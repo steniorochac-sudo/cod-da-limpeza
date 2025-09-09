@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O Código da Limpeza - Mais Gestão</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .sparkle {
+            animation: sparkle 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes sparkle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+        
+        .progress-fill {
+            transition: width 1s ease-in-out;
+        }
+        
+        .map-node {
+            transition: all 0.3s ease;
+        }
+        
+        .map-node:hover {
+            transform: scale(1.1);
+        }
+        
+        .completed {
+            filter: brightness(1.2);
+        }
+        
+        .locked {
+            filter: grayscale(1) opacity(0.5);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-green-50 to-cyan-100 min-h-screen">
+    <div class="container mx-auto px-4 py-6 max-w-6xl">
+        <!-- Admin Panel -->
+        <div id="adminPanel" class="bg-white rounded-2xl shadow-lg p-8 mb-8 text-center">
+            <div class="flex items-center justify-center mb-4">
+                <span class="text-6xl pulse-animation">🪣</span>
+                <span class="text-4xl ml-2">✨</span>
+            </div>
+            <h1 class="text-4xl font-bold text-blue-800 mb-2">O Código da Limpeza</h1>
+            <p class="text-lg text-blue-600 font-medium mb-6">Jornada do Bem-Querer na Mais Gestão</p>
+            
+            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <!-- QR Code Section -->
+                <div class="bg-gradient-to-br from-blue-50 to-green-50 p-6 rounded-xl">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">📱 Compartilhar Jogo</h2>
+                     <div id="qrCodeContainer" class="mb-4 flex justify-center">
+                        <div id="qrcode" class="w-48 h-48 bg-white border-2 border-gray-300 rounded-lg flex items-center justify-center p-2"></div>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">Escaneie o QR Code ou copie o link:</p>
+                    <div class="flex gap-2">
+                        <input type="text" id="gameLink" readonly class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50">
+                        <button onclick="copyLink()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">
+                            📋 Copiar
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Live Stats -->
+                <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-xl">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">📊 Status da Competição</h2>
+                    <div class="grid grid-cols-3 gap-2 mb-4">
+                        <div class="bg-white p-3 rounded-lg text-center">
+                            <div class="text-2xl font-bold text-blue-600" id="totalTeams">0</div>
+                            <div class="text-xs text-gray-600">Registradas</div>
+                        </div>
+                        <div class="bg-white p-3 rounded-lg text-center">
+                            <div class="text-2xl font-bold text-green-600" id="activeTeams">0</div>
+                            <div class="text-xs text-gray-600">Jogando</div>
+                        </div>
+                        <div class="bg-white p-3 rounded-lg text-center">
+                            <div class="text-2xl font-bold text-purple-600" id="completedTeams">0</div>
+                            <div class="text-xs text-gray-600">Finalizaram</div>
+                        </div>
+                    </div>
+                    <button onclick="showLiveRanking()" class="w-full mb-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-2 px-4 rounded-xl text-sm">
+                        🏆 Ver Ranking Ao Vivo
+                    </button>
+                    <button onclick="toggleTeamsList()" class="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white font-bold py-2 px-4 rounded-xl text-sm">
+                        👥 Ver Todas as Equipes
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Competition Control -->
+            <div class="mt-8 space-y-4">
+                <div id="competitionStatus" class="text-lg font-semibold text-gray-700">
+                    Status: <span id="statusText" class="text-yellow-600">Aguardando Equipes</span>
+                </div>
+                
+                <div id="startCompetitionSection" style="display: block;">
+                    <button id="startCompetitionBtn" onclick="startCompetition()" class="bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-bold py-4 px-8 rounded-xl text-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        🚀 Iniciar Competição
+                    </button>
+                    <p class="text-sm text-gray-500 mt-2">Aguarde pelo menos 1 equipe se registrar</p>
+                </div>
+                
+                <div id="competitionRunning" style="display: none;">
+                    <div class="bg-green-100 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-green-800">⏱️ Competição em Andamento</div>
+                        <div class="text-lg text-green-600">Tempo: <span id="competitionTimer">00:00</span></div>
+                    </div>
+                </div>
+                
+                <button onclick="startAsPlayer()" class="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-bold py-3 px-6 rounded-xl">
+                    🎮 Testar Como Equipe
+                </button>
+            </div>
+        </div>
+
+        <!-- Team Registration -->
+        <div id="teamRegistration" class="bg-white rounded-2xl shadow-lg p-8 mb-8 text-center" style="display: none;">
+            <div class="flex items-center justify-center mb-4">
+                <span class="text-6xl pulse-animation">🪣</span>
+                <span class="text-4xl ml-2">✨</span>
+            </div>
+            <h1 class="text-4xl font-bold text-blue-800 mb-2">O Código da Limpeza</h1>
+            <p class="text-lg text-blue-600 font-medium mb-6">Jornada do Bem-Querer na Mais Gestão</p>
+            
+            <div class="max-w-md mx-auto">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">🏆 Registre sua Equipe</h2>
+                <p class="text-gray-600 mb-6">Digite o nome da sua equipe para se inscrever na competição!</p>
+                <input type="text" id="teamNameInput" placeholder="Nome da Equipe" class="w-full px-4 py-3 border-2 border-blue-300 rounded-xl text-center text-lg font-semibold focus:border-blue-500 focus:outline-none mb-4" onkeypress="if(event.key==='Enter') registerTeam()">
+                <button onclick="registerTeam()" class="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white font-bold py-4 px-6 rounded-xl text-lg">
+                    📝 Registrar Equipe
+                </button>
+                <p class="text-sm text-gray-500 mt-4">Aguarde o administrador iniciar a competição!</p>
+                
+                <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <p class="text-sm text-blue-600 mb-2">
+                        <span id="liveTeamsCount">0</span>/36 vagas preenchidas
+                    </p>
+                    <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+                        <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" id="teamsProgress" style="width: 0%;"></div>
+                    </div>
+                    <button onclick="showTeamsListFromPlayer()" class="text-xs text-blue-500 hover:text-blue-700 underline">
+                        👥 Ver todas as equipes registradas
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Waiting Room -->
+        <div id="waitingRoom" class="bg-white rounded-2xl shadow-lg p-8 mb-8 text-center" style="display: none;">
+            <div class="flex items-center justify-center mb-4">
+                <span class="text-6xl pulse-animation">⏳</span>
+            </div>
+            <h1 class="text-3xl font-bold text-blue-800 mb-2">Equipe Registrada!</h1>
+            <p class="text-xl text-green-600 font-semibold mb-4">Bem-vinda, <span id="waitingTeamName"></span>!</p>
+            
+            <div class="max-w-md mx-auto">
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-lg mb-6">
+                    <div class="flex items-center mb-2">
+                        <span class="text-2xl mr-2">⏰</span>
+                        <h3 class="text-lg font-semibold text-yellow-800">Aguardando Início</h3>
+                    </div>
+                    <p class="text-yellow-700">O administrador ainda não iniciou a competição. Aguarde...</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-blue-600" id="waitingTeamsCount">0</div>
+                        <div class="text-sm text-blue-600">de 36 vagas preenchidas</div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 my-2">
+                            <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" id="waitingTeamsProgress" style="width: 0%;"></div>
+                        </div>
+                        <button onclick="showTeamsListFromPlayer()" class="mt-2 text-xs text-blue-500 hover:text-blue-700 underline">
+                            👥 Ver lista completa
+                        </button>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600">
+                            ⚡ Quando a competição iniciar, o cronômetro começará automaticamente para todas as equipes!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Header (Hidden initially) -->
+        <div id="gameHeader" class="text-center mb-8" style="display: none;">
+            <div class="flex items-center justify-center mb-4">
+                <span class="text-6xl pulse-animation">🪣</span>
+                <span class="text-4xl ml-2">✨</span>
+            </div>
+            <h1 class="text-4xl font-bold text-blue-800 mb-2">O Código da Limpeza</h1>
+            <p class="text-lg text-blue-600 font-medium">Equipe: <span id="currentTeamName" class="font-bold text-purple-600"></span></p>
+            <div class="flex justify-center items-center space-x-6 mt-4">
+                <div class="bg-blue-100 px-4 py-2 rounded-lg">
+                    <span class="text-sm text-blue-600">⏱️ Tempo: </span>
+                    <span id="gameTimer" class="font-bold text-blue-800">00:00</span>
+                </div>
+                <div class="bg-green-100 px-4 py-2 rounded-lg">
+                    <span class="text-sm text-green-600">✅ Acertos: </span>
+                    <span id="correctAnswers" class="font-bold text-green-800">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Player Stats -->
+        <div id="playerStats" class="bg-white rounded-2xl shadow-lg p-6 mb-8" style="display: none;">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-blue-600" id="cleaningPoints">0/100</div>
+                    <div class="text-sm text-gray-600">Pontos de Limpeza</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-green-600" id="careLevel">0/100</div>
+                    <div class="text-sm text-gray-600">Nível de Cuidado</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-purple-600" id="clientSatisfaction">0/100</div>
+                    <div class="text-sm text-gray-600">Satisfação Cliente</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-orange-600" id="teamSpirit">0/100</div>
+                    <div class="text-sm text-gray-600">Espírito de Equipe</div>
+                </div>
+            </div>
+            
+            <div class="w-full bg-gray-200 rounded-full h-4 mb-2">
+                <div class="bg-gradient-to-r from-blue-500 via-green-500 to-purple-500 h-4 rounded-full progress-fill" id="codeProgress" style="width: 0%"></div>
+            </div>
+            <div class="text-center text-sm text-gray-600">
+                Progresso até o Código: <span id="progressText" class="font-semibold text-blue-600">0%</span>
+            </div>
+        </div>
+
+        <!-- Game Map -->
+        <div id="gameMap" class="bg-white rounded-2xl shadow-lg p-8 mb-8" style="display: none;">
+            <h2 class="text-2xl font-bold text-center text-gray-800 mb-8">🗺️ Mapa da Jornada do Bem-Querer</h2>
+            <div class="relative">
+                <!-- SVG path for connecting lines can be added here if desired -->
+                <div class="relative grid grid-cols-1 md:grid-cols-5 gap-8 py-8" style="z-index: 2;">
+                    <div class="map-node text-center" id="node1">
+                        <div class="w-20 h-20 mx-auto mb-3 bg-blue-500 rounded-full flex items-center justify-center text-3xl cursor-pointer" onclick="startLevel(1)">
+                            🧹
+                        </div>
+                        <h3 class="font-bold text-blue-800">Fundamentos</h3>
+                        <p class="text-sm text-gray-600">Bases do Bem-Querer</p>
+                    </div>
+                    <div class="map-node text-center locked" id="node2">
+                        <div class="w-20 h-20 mx-auto mb-3 bg-green-500 rounded-full flex items-center justify-center text-3xl cursor-pointer" onclick="startLevel(2)">
+                            🧽
+                        </div>
+                        <h3 class="font-bold text-green-800">Técnicas</h3>
+                        <p class="text-sm text-gray-600">Métodos com Carinho</p>
+                    </div>
+                    <div class="map-node text-center locked" id="node3">
+                        <div class="w-20 h-20 mx-auto mb-3 bg-purple-500 rounded-full flex items-center justify-center text-3xl cursor-pointer" onclick="startLevel(3)">
+                            🤝
+                        </div>
+                        <h3 class="font-bold text-purple-800">Relacionamento</h3>
+                        <p class="text-sm text-gray-600">Conexão Humana</p>
+                    </div>
+                    <div class="map-node text-center locked" id="node4">
+                        <div class="w-20 h-20 mx-auto mb-3 bg-orange-500 rounded-full flex items-center justify-center text-3xl cursor-pointer" onclick="startLevel(4)">
+                            ⭐
+                        </div>
+                        <h3 class="font-bold text-orange-800">Excelência</h3>
+                        <p class="text-sm text-gray-600">Superação Constante</p>
+                    </div>
+                    <div class="map-node text-center locked" id="node5">
+                        <div class="w-20 h-20 mx-auto mb-3 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center text-3xl cursor-pointer sparkle" onclick="startLevel(5)">
+                            👑
+                        </div>
+                        <h3 class="font-bold text-yellow-800">O Código</h3>
+                        <p class="text-sm text-gray-600">Sabedoria Completa</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Area -->
+        <div id="gameArea" class="bg-white rounded-2xl shadow-lg p-8 fade-in" style="display: none;">
+            <div class="text-center mb-6">
+                <div class="text-5xl mb-4" id="levelEmoji"></div>
+                <h2 class="text-3xl font-bold text-gray-800 mb-3" id="levelTitle"></h2>
+                <p class="text-gray-600 text-lg leading-relaxed mb-6" id="levelDescription"></p>
+            </div>
+            <div id="scenarioContainer" class="mb-8">
+                <div class="bg-gradient-to-r from-blue-50 to-green-50 p-6 rounded-xl mb-6">
+                    <div class="flex items-center mb-4">
+                        <span class="text-3xl mr-3" id="scenarioEmoji"></span>
+                        <h3 class="text-xl font-bold text-gray-800" id="scenarioTitle"></h3>
+                    </div>
+                    <p class="text-gray-700 mb-4" id="scenarioText"></p>
+                </div>
+                <div id="choicesContainer" class="space-y-4"></div>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <div id="teamsListModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-2xl p-8 max-w-4xl mx-4 text-center max-h-[80vh] overflow-y-auto">
+                <div class="text-6xl mb-6">👥</div>
+                <h2 class="text-3xl font-bold text-blue-800 mb-4">Equipes Registradas Online</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <div class="text-sm text-blue-600">
+                        <span id="modalTeamsCount">0</span>/36 vagas preenchidas
+                    </div>
+                    <button onclick="closeTeamsList()" class="text-gray-500 hover:text-gray-700 text-2xl">✕</button>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3 mb-6">
+                    <div class="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all duration-500" id="modalTeamsProgress" style="width: 0%"></div>
+                </div>
+                <div id="teamsListContainer" class="space-y-3 mb-6"></div>
+                <div class="text-sm text-gray-500">
+                    ⚡ Atualização automática em tempo real
+                </div>
+            </div>
+        </div>
+
+        <div id="liveRankingModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-2xl p-8 max-w-5xl mx-4 text-center max-h-[80vh] overflow-y-auto">
+                <div class="text-6xl mb-6 sparkle">🏆</div>
+                <h2 class="text-3xl font-bold text-blue-800 mb-6">🔴 Ranking Ao Vivo</h2>
+                <button onclick="closeLiveRanking()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl">✕</button>
+                <div id="liveRankingList" class="space-y-3 mb-6 text-left"></div>
+                <div class="text-sm text-gray-500">
+                    Ranking baseado em: 1º Acertos, 2º Menor Tempo
+                </div>
+            </div>
+        </div>
+
+        <div id="rankingModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-2xl p-8 max-w-4xl mx-4 text-center max-h-[80vh] overflow-y-auto">
+                <div class="text-6xl mb-6 sparkle">🏆</div>
+                <h2 class="text-3xl font-bold text-yellow-800 mb-6">Ranking Final - Top 10</h2>
+                <div id="rankingList" class="space-y-3 mb-6"></div>
+                <button onclick="showCodeModal()" class="bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold py-3 px-8 rounded-xl hover:from-yellow-600 hover:to-orange-600">
+                    Ver O Código da Limpeza
+                </button>
+            </div>
+        </div>
+
+        <div id="codeModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-2xl p-8 max-w-2xl mx-4 text-center">
+                <div class="text-6xl mb-6 sparkle">👑</div>
+                <h2 class="text-3xl font-bold text-yellow-800 mb-4">O Código da Limpeza Revelado!</h2>
+                <div class="bg-gradient-to-r from-yellow-50 to-orange-50 p-6 rounded-xl mb-6">
+                    <div class="text-left space-y-3">
+                        <p class="font-bold text-lg text-center text-yellow-800 mb-4">🌟 OS 5 PILARES DO BEM-QUERER 🌟</p>
+                        <div class="space-y-2">
+                            <p><span class="font-bold text-blue-600">1. CUIDADO:</span> Cada espaço é tratado como se fosse nosso lar</p>
+                            <p><span class="font-bold text-green-600">2. TÉCNICA:</span> Excelência em cada movimento, produto e processo</p>
+                            <p><span class="font-bold text-purple-600">3. CONEXÃO:</span> Relacionamentos genuínos transformam serviços</p>
+                            <p><span class="font-bold text-orange-600">4. SUPERAÇÃO:</span> Sempre buscamos ir além do esperado</p>
+                            <p><span class="font-bold text-yellow-600">5. AMOR:</span> O bem-querer é a essência de tudo que fazemos</p>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-gray-600 mb-6">Parabéns! Você dominou a arte da limpeza com bem-querer. Agora você carrega o Código da Mais Gestão!</p>
+                <button onclick="closeCodeModal()" class="bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold py-3 px-8 rounded-xl hover:from-yellow-600 hover:to-orange-600">
+                    Finalizar Jornada
+                </button>
+            </div>
+        </div>
+
+        <div id="achievementPopup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 hidden">
+            <div class="bg-white rounded-2xl p-8 max-w-md mx-4 text-center">
+                <div class="text-6xl mb-4" id="achievementEmoji"></div>
+                <h3 class="text-2xl font-bold text-blue-800 mb-2" id="achievementTitle"></h3>
+                <p class="text-gray-600 mb-6" id="achievementDescription"></p>
+                <button onclick="closeAchievement()" class="bg-gradient-to-r from-blue-500 to-green-500 text-white font-semibold py-3 px-6 rounded-xl hover:from-blue-600 hover:to-green-600">
+                    Continuar
+                </button>
+            </div>
+        </div>
+        
+         <!-- Custom Alert Modal -->
+        <div id="customAlert" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-2xl p-8 max-w-sm mx-4 text-center shadow-2xl">
+                <p id="customAlertMessage" class="text-gray-700 text-lg mb-6"></p>
+                <button onclick="closeCustomAlert()" class="bg-blue-500 text-white font-bold py-2 px-8 rounded-lg hover:bg-blue-600">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Script para QR Code -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.js"></script>
+
+    <script type="module">
+        // Importa as funções necessárias do Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, collection, addDoc, updateDoc, query, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // =================================================================================
+        // ATENÇÃO: SUBSTITUA COM AS CONFIGURAÇÕES DO SEU PROJETO FIREBASE
+        // Você pode encontrar esses dados no console do seu projeto Firebase,
+        // nas configurações do projeto (ícone de engrenagem) -> Geral -> Seus apps -> App da Web.
+        // =================================================================================
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCg70w7ACg2s6o0We4_AfkstnYdtHe-e6I",
+  authDomain: "game-gestao-e-cultura.firebaseapp.com",
+  projectId: "game-gestao-e-cultura",
+  storageBucket: "game-gestao-e-cultura.firebasestorage.app",
+  messagingSenderId: "348276239024",
+  appId: "1:348276239024:web:81a54b999aee2047892975",
+  measurementId: "G-21B16Q00RT"
+};
+        // =================================================================================
+
+        // Inicializa o Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Referências do Firestore (onde os dados são guardados)
+        const competitionDocRef = doc(db, "competition", "main");
+        const teamsCollectionRef = collection(db, "competition", "main", "teams");
+
+        // Variáveis de estado globais
+        let gameState = {
+            teamId: sessionStorage.getItem('teamId'), // Usar sessionStorage para lembrar da equipe
+            teamName: sessionStorage.getItem('teamName'),
+            cleaningPoints: 0,
+            careLevel: 0,
+            clientSatisfaction: 0,
+            teamSpirit: 0,
+            currentLevel: 1,
+            completedLevels: [],
+            currentScenario: 0,
+            startTime: null,
+            endTime: null,
+            correctAnswers: 0,
+            totalQuestions: 0
+        };
+
+        let teamsDatabase = [];
+        let competitionState = { status: "waiting", startTime: null };
+        let gameTimerInterval = null;
+        let competitionTimerInterval = null;
+
+        // --- Lógica do Jogo (Níveis, Cenários) ---
+        const levels = [
+             {
+                id: 1,
+                title: "Fundamentos do Bem-Querer",
+                emoji: "🧹",
+                description: "Aprenda os princípios básicos da limpeza com amor e cuidado genuíno.",
+                scenarios: [
+                    {
+                        emoji: "🏢",
+                        title: "Primeiro Contato",
+                        text: "Você chegou ao escritório da Sra. Maria. Ela parece preocupada e menciona que teve uma experiência ruim com a empresa anterior. Como você vai demonstrar o diferencial da Mais Gestão?",
+                        choices: [
+                            { text: "😊 Cumprimentar com um sorriso genuíno e perguntar sobre suas preocupações", scores: { cleaning: 20, care: 25, satisfaction: 30, team: 15 }, feedback: "Perfeito! Você mostrou que se importa genuinamente com a cliente.", isCorrect: true },
+                            { text: "📋 Apresentar imediatamente os serviços e começar o trabalho", scores: { cleaning: 15, care: 5, satisfaction: 5, team: 0 }, feedback: "Eficiente, mas você perdeu a oportunidade de criar conexão.", isCorrect: false },
+                            { text: "🤝 Ouvir atentamente e explicar como a Mais Gestão é diferente", scores: { cleaning: 10, care: 30, satisfaction: 25, team: 20 }, feedback: "Excelente! Você construiu confiança através da escuta ativa.", isCorrect: true }
+                        ]
+                    },
+                    {
+                        emoji: "🧽",
+                        title: "Preparação com Carinho",
+                        text: "Antes de começar a limpeza, você precisa preparar os materiais. Como você faz isso demonstrando o bem-querer?",
+                        choices: [
+                            { text: "🎯 Organizar tudo metodicamente, explicando cada produto para a cliente", scores: { cleaning: 25, care: 20, satisfaction: 20, team: 15 }, feedback: "Ótimo! Transparência gera confiança e demonstra profissionalismo.", isCorrect: true },
+                            { text: "⚡ Preparar rapidamente para começar logo o serviço", scores: { cleaning: 10, care: 0, satisfaction: 5, team: 0 }, feedback: "Rápido, mas sem o toque humano que faz a diferença.", isCorrect: false },
+                            { text: "💚 Mostrar produtos ecológicos e explicar o cuidado com a saúde da família", scores: { cleaning: 20, care: 30, satisfaction: 25, team: 20 }, feedback: "Perfeito! Você demonstrou cuidado integral com as pessoas.", isCorrect: true }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 2,
+                title: "Técnicas com Carinho",
+                emoji: "🧽",
+                description: "Domine as técnicas de limpeza aplicadas com amor e atenção aos detalhes.",
+                scenarios: [ { emoji: "✨", title: "Limpeza Detalhada", text: "Você está limpando a sala principal. Nota alguns detalhes que outras empresas ignorariam. Como você aplica o bem-querer?", choices: [ { text: "🔍 Limpar cada detalhe com cuidado, como se fosse sua própria casa", scores: { cleaning: 25, care: 20, satisfaction: 25, team: 5 }, feedback: "Excelente! Esse cuidado especial é o que diferencia a Mais Gestão.", isCorrect: true }, { text: "⏰ Focar nas áreas principais para otimizar o tempo", scores: { cleaning: 15, care: 5, satisfaction: 10, team: 0 }, feedback: "Eficiente, mas você perdeu a chance de surpreender positivamente.", isCorrect: false }, { text: "📸 Fotografar antes e depois para mostrar o cuidado especial", scores: { cleaning: 20, care: 15, satisfaction: 20, team: 15 }, feedback: "Criativo! Você documentou o bem-querer em ação.", isCorrect: true } ] } ]
+            },
+            {
+                id: 3,
+                title: "Relacionamento Humano",
+                emoji: "🤝",
+                description: "Construa conexões genuínas que transformam clientes em família.",
+                scenarios: [ { emoji: "👥", title: "Construindo Vínculos", text: "Durante o serviço, a cliente compartilha que está passando por um momento difícil. Como você responde com bem-querer?", choices: [ { text: "💝 Oferecer palavras de apoio e um cuidado extra no serviço", scores: { cleaning: 15, care: 30, satisfaction: 30, team: 20 }, feedback: "Perfeito! Você transformou um serviço em um ato de amor.", isCorrect: true }, { text: "🤐 Manter o foco profissional e continuar o trabalho", scores: { cleaning: 20, care: 0, satisfaction: 5, team: 0 }, feedback: "Profissional, mas você perdeu uma oportunidade de conexão humana.", isCorrect: false } ] } ]
+            },
+            {
+                id: 4,
+                title: "Excelência em Ação",
+                emoji: "⭐",
+                description: "Supere expectativas e crie momentos inesquecíveis de bem-querer.",
+                scenarios: [ { emoji: "🎁", title: "Surpreendendo com Amor", text: "Você terminou o serviço, mas quer deixar algo especial. Como você aplica o bem-querer extra?", choices: [ { text: "🌸 Deixar uma pequena flor e um bilhete de agradecimento", scores: { cleaning: 10, care: 30, satisfaction: 35, team: 25 }, feedback: "Incrível! Esse toque especial é puro bem-querer em ação.", isCorrect: true }, { text: "📞 Ligar no dia seguinte para saber se está tudo bem", scores: { cleaning: 5, care: 25, satisfaction: 30, team: 20 }, feedback: "Maravilhoso! Você mostrou que o cuidado continua após o serviço.", isCorrect: true } ] } ]
+            },
+            {
+                id: 5,
+                title: "O Código da Limpeza",
+                emoji: "👑",
+                description: "Revele e incorpore completamente a sabedoria do bem-querer na limpeza.",
+                scenarios: [ { emoji: "🌟", title: "A Revelação Final", text: "Você agora compreende completamente o Código da Limpeza. Como você vai compartilhar essa sabedoria?", choices: [ { text: "👨‍🏫 Ensinar outros colaboradores os 5 pilares do bem-querer", scores: { cleaning: 20, care: 35, satisfaction: 30, team: 40 }, feedback: "Perfeito! Você se tornou um multiplicador do bem-querer.", isCorrect: true }, { text: "📖 Criar um manual de boas práticas baseado no bem-querer", scores: { cleaning: 25, care: 30, satisfaction: 25, team: 35 }, feedback: "Excelente! Você sistematizou a sabedoria para todos.", isCorrect: true } ] } ]
+            }
+        ];
+
+        // --- Funções de Alerta Personalizado ---
+        window.customAlert = function(message) {
+            document.getElementById('customAlertMessage').textContent = message;
+            document.getElementById('customAlert').classList.remove('hidden');
+        }
+        window.closeCustomAlert = function() {
+            document.getElementById('customAlert').classList.add('hidden');
+        }
+
+        // --- Lógica Principal da Aplicação ---
+        
+        async function initApp() {
+            try {
+                await signInAnonymously(auth);
+            } catch (error) {
+                console.error("Firebase Auth Error:", error);
+                customAlert("Não foi possível conectar ao servidor. Verifique sua conexão e as configurações do Firebase.");
+                return;
+            }
+
+            onAuthStateChanged(auth, user => {
+                if (user) {
+                    // Garante que o documento principal da competição exista
+                    initializeCompetitionDocument();
+                    
+                    // Inicia os listeners em tempo real que sincronizam tudo
+                    listenToCompetitionState();
+                    listenToTeams();
+
+                    // Determina se é admin ou jogador
+                    checkViewMode();
+                } else {
+                    console.log("Usuário não autenticado.");
+                }
+            });
+        }
+        
+        // Garante que o documento principal da competição exista no Firestore
+        async function initializeCompetitionDocument() {
+            try {
+                const docSnap = await getDoc(competitionDocRef);
+                if (!docSnap.exists()) {
+                    await setDoc(competitionDocRef, {
+                        status: "waiting",
+                        startTime: null
+                    });
+                    console.log("Documento da competição inicializado.");
+                }
+            } catch (error) {
+                console.error("Erro ao inicializar documento da competição:", error);
+            }
+        }
+
+        // --- Listeners do Firestore (A Mágica do Tempo Real) ---
+        
+        function listenToCompetitionState() {
+            onSnapshot(competitionDocRef, (doc) => {
+                const data = doc.data();
+                if (!data) return;
+                
+                competitionState = data;
+
+                // Atualiza a interface do Admin
+                updateAdminCompetitionView();
+
+                // Dispara o início do jogo para os jogadores que estão esperando
+                if (gameState.teamId && competitionState.status === 'running' && !gameState.startTime) {
+                    startGameForTeam();
+                }
+            }, (error) => {
+                console.error("Erro no listener da competição:", error);
+            });
+        }
+
+        function listenToTeams() {
+            onSnapshot(query(teamsCollectionRef), (snapshot) => {
+                teamsDatabase = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Esta função agora é a fonte da verdade para todas as atualizações de UI
+                // que dependem da lista de equipes.
+                updateAllTeamUIs();
+
+            }, (error) => {
+                console.error("Erro no listener de equipes:", error);
+            });
+        }
+
+        function updateAllTeamUIs() {
+            updateLiveStats();
+            updateWaitingRoom();
+            updateTeamsListDisplay();
+            updateLiveRankingDisplay();
+        }
+
+        // --- Funções do Administrador ---
+
+        window.startCompetition = async function() {
+            if (teamsDatabase.length === 0) {
+                customAlert('Aguarde pelo menos uma equipe se registrar!');
+                return;
+            }
+            try {
+                await updateDoc(competitionDocRef, {
+                    status: 'running',
+                    startTime: serverTimestamp() // Usa o timestamp do servidor para consistência
+                });
+            } catch (error) {
+                console.error("Erro ao iniciar competição:", error);
+                customAlert("Ocorreu um erro ao iniciar a competição.");
+            }
+        }
+
+        function updateAdminCompetitionView() {
+            const statusTextEl = document.getElementById('statusText');
+            if (!statusTextEl) return;
+
+            if (competitionState.status === 'running') {
+                document.getElementById('startCompetitionSection').style.display = 'none';
+                document.getElementById('competitionRunning').style.display = 'block';
+                statusTextEl.textContent = 'Competição em Andamento';
+                statusTextEl.className = 'text-green-600';
+                startAdminCompetitionTimer();
+            } else {
+                document.getElementById('startCompetitionSection').style.display = 'block';
+                document.getElementById('competitionRunning').style.display = 'none';
+                statusTextEl.textContent = 'Aguardando Equipes';
+                statusTextEl.className = 'text-yellow-600';
+                if(competitionTimerInterval) clearInterval(competitionTimerInterval);
+            }
+        }
+
+        function startAdminCompetitionTimer() {
+            if (competitionTimerInterval) clearInterval(competitionTimerInterval);
+            if (!competitionState.startTime || !competitionState.startTime.toDate) return;
+
+            const startTime = competitionState.startTime.toDate();
+            
+            competitionTimerInterval = setInterval(() => {
+                const elapsed = new Date() - startTime;
+                const minutes = Math.floor(elapsed / 60000);
+                const seconds = Math.floor((elapsed % 60000) / 1000);
+                const timerEl = document.getElementById('competitionTimer');
+                if(timerEl) timerEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        // --- Funções do Jogador ---
+
+        window.registerTeam = async function() {
+            const teamNameInput = document.getElementById('teamNameInput');
+            const teamName = teamNameInput.value.trim();
+            if (!teamName) {
+                customAlert('Por favor, digite o nome da equipe!');
+                return;
+            }
+
+            if (teamsDatabase.length >= 36) {
+                customAlert('🚫 Limite de 36 equipes atingido! A competição está cheia.');
+                return;
+            }
+
+            if (teamsDatabase.find(team => team.name.toLowerCase() === teamName.toLowerCase())) {
+                customAlert('Esta equipe já está registrada! Escolha outro nome.');
+                return;
+            }
+
+            try {
+                const newTeam = {
+                    name: teamName,
+                    registeredAt: serverTimestamp(),
+                    status: 'registered',
+                    correctAnswers: 0,
+                    totalQuestions: 0,
+                    timeInSeconds: 0,
+                    scores: { cleaning: 0, care: 0, satisfaction: 0, team: 0 }
+                };
+                
+                const docRef = await addDoc(teamsCollectionRef, newTeam);
+                gameState.teamId = docRef.id;
+                gameState.teamName = teamName;
+                
+                // Salva na sessão do navegador para o caso de recarregar a página
+                sessionStorage.setItem('teamId', docRef.id);
+                sessionStorage.setItem('teamName', teamName);
+                
+                showWaitingRoom();
+
+            } catch (error) {
+                console.error("Erro ao registrar equipe: ", error);
+                customAlert("Ocorreu um erro ao registrar a equipe. Tente novamente.");
+            }
+        }
+
+        function showWaitingRoom() {
+            document.getElementById('teamRegistration').style.display = 'none';
+            document.getElementById('waitingRoom').style.display = 'block';
+            document.getElementById('waitingTeamName').textContent = gameState.teamName;
+        }
+
+        function startGameForTeam() {
+            if (!competitionState.startTime || !competitionState.startTime.toDate) {
+                console.error("Tentando iniciar o jogo sem um startTime da competição.");
+                return;
+            }
+            gameState.startTime = competitionState.startTime.toDate();
+
+            const teamDocRef = doc(db, "competition", "main", "teams", gameState.teamId);
+            updateDoc(teamDocRef, { status: 'playing' });
+
+            document.getElementById('waitingRoom').style.display = 'none';
+            document.getElementById('gameHeader').style.display = 'block';
+            document.getElementById('playerStats').style.display = 'block';
+            document.getElementById('gameMap').style.display = 'block';
+            document.getElementById('currentTeamName').textContent = gameState.teamName;
+            
+            startPlayerTimer();
+            updateStats();
+        }
+        
+        function startPlayerTimer() {
+            if (gameTimerInterval) clearInterval(gameTimerInterval);
+            
+            gameTimerInterval = setInterval(() => {
+                if (gameState.startTime && !gameState.endTime) {
+                    const elapsed = new Date() - gameState.startTime;
+                    const minutes = Math.floor(elapsed / 60000);
+                    const seconds = Math.floor((elapsed % 60000) / 1000);
+                    document.getElementById('gameTimer').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                } else {
+                     clearInterval(gameTimerInterval);
+                }
+            }, 1000);
+        }
+
+        window.startLevel = function(levelId) {
+            if (levelId > gameState.currentLevel || gameState.completedLevels.includes(levelId)) return;
+            const level = levels.find(l => l.id === levelId);
+            if (!level) return;
+
+            document.getElementById('gameMap').style.display = 'none';
+            document.getElementById('gameArea').style.display = 'block';
+            document.getElementById('levelEmoji').textContent = level.emoji;
+            document.getElementById('levelTitle').textContent = level.title;
+            document.getElementById('levelDescription').textContent = level.description;
+            gameState.currentScenario = 0;
+            showScenario(level, 0);
+        }
+
+        function showScenario(level, scenarioIndex) {
+            if (scenarioIndex >= level.scenarios.length) {
+                completeLevel(level.id);
+                return;
+            }
+            
+            const scenario = level.scenarios[scenarioIndex];
+            document.getElementById('scenarioEmoji').textContent = scenario.emoji;
+            document.getElementById('scenarioTitle').textContent = scenario.title;
+            document.getElementById('scenarioText').textContent = scenario.text;
+            
+            const choicesContainer = document.getElementById('choicesContainer');
+            choicesContainer.innerHTML = '';
+            scenario.choices.forEach((choice, choiceIndex) => {
+                const button = document.createElement('button');
+                button.className = 'w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white font-semibold py-4 px-6 rounded-xl text-left mb-3 transition-all duration-300 hover:scale-102';
+                button.innerHTML = choice.text;
+                button.onclick = () => makeChoice(level, scenarioIndex, choiceIndex);
+                choicesContainer.appendChild(button);
+            });
+        }
+        
+        function makeChoice(level, scenarioIndex, choiceIndex) {
+            const scenario = level.scenarios[scenarioIndex];
+            const choice = scenario.choices[choiceIndex];
+
+            gameState.totalQuestions++;
+            if (choice.isCorrect) gameState.correctAnswers++;
+            
+            gameState.cleaningPoints = Math.min(100, gameState.cleaningPoints + (choice.scores.cleaning || 0));
+            gameState.careLevel = Math.min(100, gameState.careLevel + (choice.scores.care || 0));
+            gameState.clientSatisfaction = Math.min(100, gameState.clientSatisfaction + (choice.scores.satisfaction || 0));
+            gameState.teamSpirit = Math.min(100, gameState.teamSpirit + (choice.scores.team || 0));
+
+            updateStats();
+            showFeedback(choice.feedback, level, scenarioIndex);
+        }
+
+        function showFeedback(feedback, level, scenarioIndex) {
+            const choicesContainer = document.getElementById('choicesContainer');
+            choicesContainer.innerHTML = `
+                <div class="bg-green-50 border-l-4 border-green-400 p-6 rounded-lg mb-6">
+                    <div class="flex items-center mb-2"><span class="text-2xl mr-2">💚</span><h3 class="text-lg font-semibold text-green-800">Resultado:</h3></div>
+                    <p class="text-green-700 mb-4">${feedback}</p>
+                </div>
+                <button class="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-4 px-6 rounded-xl" onclick="nextScenario(${level.id}, ${scenarioIndex})">
+                    ➡️ Continuar
+                </button>`;
+        }
+        
+        window.nextScenario = function(levelId, currentScenario) {
+            const level = levels.find(l => l.id === levelId);
+            gameState.currentScenario = currentScenario + 1;
+            showScenario(level, gameState.currentScenario);
+        }
+
+        async function completeLevel(levelId) {
+            if (!gameState.completedLevels.includes(levelId)) {
+                gameState.completedLevels.push(levelId);
+                gameState.currentLevel = Math.min(levelId + 1, 6);
+            }
+            updateStats();
+
+            if (levelId === 5) {
+                gameState.endTime = new Date();
+                await saveTeamResult();
+                showRanking();
+            } else {
+                showAchievement(`Nível ${levelId} Concluído!`, "Você dominou mais um aspecto do bem-querer!", "🎉");
+            }
+        }
+
+        async function saveTeamResult() {
+            if (!gameState.teamId) return;
+
+            const totalTime = gameState.endTime - gameState.startTime;
+            const timeInSeconds = Math.floor(totalTime / 1000);
+            
+            const teamDocRef = doc(db, "competition", "main", "teams", gameState.teamId);
+            try {
+                await updateDoc(teamDocRef, {
+                    status: 'completed',
+                    correctAnswers: gameState.correctAnswers,
+                    totalQuestions: gameState.totalQuestions,
+                    timeInSeconds: timeInSeconds,
+                    completedAt: serverTimestamp(),
+                    scores: {
+                        cleaning: gameState.cleaningPoints,
+                        care: gameState.careLevel,
+                        satisfaction: gameState.clientSatisfaction,
+                        team: gameState.teamSpirit
+                    }
+                });
+            } catch (error) {
+                console.error("Erro ao salvar resultado da equipe:", error);
+            }
+        }
+        
+        // --- Funções de UI e Utilitários ---
+        
+        function updateStats() {
+            document.getElementById('cleaningPoints').textContent = `${gameState.cleaningPoints}/100`;
+            document.getElementById('careLevel').textContent = `${gameState.careLevel}/100`;
+            document.getElementById('clientSatisfaction').textContent = `${gameState.clientSatisfaction}/100`;
+            document.getElementById('teamSpirit').textContent = `${gameState.teamSpirit}/100`;
+            document.getElementById('correctAnswers').textContent = gameState.correctAnswers;
+            
+            const totalPoints = gameState.cleaningPoints + gameState.careLevel + gameState.clientSatisfaction + gameState.teamSpirit;
+            const progressPercent = Math.min((totalPoints / 400) * 100, 100);
+            document.getElementById('codeProgress').style.width = progressPercent + '%';
+            document.getElementById('progressText').textContent = Math.round(progressPercent) + '%';
+            
+            updateMapNodes();
+        }
+
+        function updateMapNodes() {
+            for (let i = 1; i <= 5; i++) {
+                const node = document.getElementById(`node${i}`);
+                if (!node) continue;
+                if (gameState.completedLevels.includes(i)) {
+                    node.classList.remove('locked', 'opacity-50', 'grayscale');
+                    node.classList.add('completed');
+                } else if (i === gameState.currentLevel) {
+                    node.classList.remove('locked', 'opacity-50', 'grayscale');
+                } else {
+                    node.classList.add('locked', 'opacity-50', 'grayscale');
+                }
+            }
+        }
+
+        function updateLiveStats() {
+            const total = teamsDatabase.length;
+            const playing = teamsDatabase.filter(t => t.status === 'playing').length;
+            const completed = teamsDatabase.filter(t => t.status === 'completed').length;
+            const maxTeams = 36;
+            const progress = (total / maxTeams) * 100;
+
+            document.getElementById('totalTeams').textContent = total;
+            document.getElementById('activeTeams').textContent = playing;
+            document.getElementById('completedTeams').textContent = completed;
+            document.getElementById('liveTeamsCount').textContent = total;
+
+            const startBtn = document.getElementById('startCompetitionBtn');
+            if(startBtn) {
+                 startBtn.disabled = total === 0 || competitionState.status !== 'waiting';
+                 startBtn.nextElementSibling.textContent = total > 0 ? `${total} equipe(s) registrada(s)` : `Aguarde pelo menos 1 equipe se registrar`;
+            }
+           
+            const progressEl = document.getElementById('teamsProgress');
+            if (progressEl) progressEl.style.width = `${progress}%`;
+        }
+
+        function updateWaitingRoom() {
+            const total = teamsDatabase.length;
+            const maxTeams = 36;
+            const progress = (total / maxTeams) * 100;
+
+            const countEl = document.getElementById('waitingTeamsCount');
+            const progressEl = document.getElementById('waitingTeamsProgress');
+            if(countEl) countEl.textContent = total;
+            if(progressEl) progressEl.style.width = `${progress}%`;
+        }
+        
+        function formatTime(seconds) {
+            if (isNaN(seconds) || seconds < 0) return '00:00';
+            const min = Math.floor(seconds / 60);
+            const sec = seconds % 60;
+            return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+        }
+        
+        function showRanking() {
+            const completedTeams = teamsDatabase.filter(team => team.status === 'completed');
+            const sortedTeams = completedTeams.sort((a, b) => {
+                if (a.correctAnswers !== b.correctAnswers) return b.correctAnswers - a.correctAnswers;
+                return a.timeInSeconds - b.timeInSeconds;
+            });
+
+            const top10 = sortedTeams.slice(0, 10);
+            const rankingList = document.getElementById('rankingList');
+            
+            rankingList.innerHTML = top10.map((team, index) => {
+                const position = index + 1;
+                const isCurrentTeam = team.id === gameState.teamId;
+                const medal = ['🥇', '🥈', '🥉'][index] || `${position}º`;
+                
+                return `
+                    <div class="${isCurrentTeam ? 'bg-yellow-100 border-2 border-yellow-400' : 'bg-gray-50'} p-4 rounded-lg flex justify-between items-center">
+                        <div class="flex items-center space-x-4">
+                            <span class="text-2xl font-bold">${medal}</span>
+                            <div>
+                                <div class="font-bold text-lg ${isCurrentTeam ? 'text-yellow-800' : 'text-gray-800'}">${team.name}</div>
+                                <div class="text-sm text-gray-600">Acertos: ${team.correctAnswers}/${team.totalQuestions} | Tempo: ${formatTime(team.timeInSeconds)}</div>
+                            </div>
+                        </div>
+                    </div>`;
+            }).join('');
+            
+            document.getElementById('rankingModal').classList.remove('hidden');
+            document.getElementById('rankingModal').classList.add('flex');
+        }
+
+        window.showLiveRanking = function() {
+            updateLiveRankingDisplay();
+            document.getElementById('liveRankingModal').classList.remove('hidden');
+            document.getElementById('liveRankingModal').classList.add('flex');
+        }
+
+        window.closeLiveRanking = function() {
+            document.getElementById('liveRankingModal').classList.add('hidden');
+            document.getElementById('liveRankingModal').classList.remove('flex');
+        }
+
+        function updateLiveRankingDisplay() {
+            const sortedTeams = [...teamsDatabase].sort((a, b) => {
+                if (a.status === 'completed' && b.status !== 'completed') return -1;
+                if (a.status !== 'completed' && b.status === 'completed') return 1;
+                if (a.status === 'completed' && b.status === 'completed') {
+                    if (a.correctAnswers !== b.correctAnswers) return b.correctAnswers - a.correctAnswers;
+                    return a.timeInSeconds - b.timeInSeconds;
+                }
+                if (a.status === 'playing' && b.status === 'registered') return -1;
+                if (a.status === 'registered' && b.status === 'playing') return 1;
+                return (a.registeredAt?.toDate() || 0) - (b.registeredAt?.toDate() || 0);
+            });
+            
+            const liveRankingList = document.getElementById('liveRankingList');
+            if(!liveRankingList) return;
+            
+            liveRankingList.innerHTML = sortedTeams.map((team, index) => {
+                const medal = ['🥇', '🥈', '🥉'][index] || `${index + 1}º`;
+                let statusText;
+                 if (team.status === 'completed') statusText = `<span class="text-green-600">✅ Finalizado - ${team.correctAnswers}/${team.totalQuestions} acertos em ${formatTime(team.timeInSeconds)}</span>`;
+                 else if (team.status === 'playing') statusText = `<span class="text-blue-600">🎮 Jogando...</span>`;
+                 else statusText = `<span class="text-yellow-600">⏳ Aguardando...</span>`;
+
+                return `
+                    <div class="bg-gray-50 p-4 rounded-lg flex items-center">
+                        <span class="text-2xl font-bold w-12 text-center">${medal}</span>
+                        <div>
+                            <div class="font-bold text-lg text-gray-800">${team.name}</div>
+                            <div class="text-sm">${statusText}</div>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+        
+        window.toggleTeamsList = function() {
+            updateTeamsListDisplay();
+            document.getElementById('teamsListModal').classList.remove('hidden');
+            document.getElementById('teamsListModal').classList.add('flex');
+        }
+        window.closeTeamsList = function() {
+            document.getElementById('teamsListModal').classList.add('hidden');
+            document.getElementById('teamsListModal').classList.remove('flex');
+        }
+        window.showTeamsListFromPlayer = toggleTeamsList;
+
+        function updateTeamsListDisplay() {
+            const container = document.getElementById('teamsListContainer');
+            if(!container) return;
+
+            const total = teamsDatabase.length;
+            const maxTeams = 36;
+            const progress = (total / maxTeams) * 100;
+            
+            document.getElementById('modalTeamsCount').textContent = total;
+            document.getElementById('modalTeamsProgress').style.width = `${progress}%`;
+            
+            if (teamsDatabase.length === 0) {
+                container.innerHTML = `<p class="text-gray-500">Nenhuma equipe registrada ainda.</p>`;
+                return;
+            }
+
+            const sorted = [...teamsDatabase].sort((a, b) => (a.registeredAt?.toDate() || 0) - (b.registeredAt?.toDate() || 0));
+
+            container.innerHTML = sorted.map(team => {
+                 let statusHtml;
+                 if (team.status === 'completed') statusHtml = `<div class="px-3 py-1 rounded-full text-sm font-semibold text-green-600 bg-green-50">✅ Finalizado</div>`;
+                 else if (team.status === 'playing') statusHtml = `<div class="px-3 py-1 rounded-full text-sm font-semibold text-blue-600 bg-blue-50">🎮 Jogando</div>`;
+                 else statusHtml = `<div class="px-3 py-1 rounded-full text-sm font-semibold text-yellow-600 bg-yellow-50">⏳ Registrada</div>`;
+
+                return `
+                    <div class="bg-gray-50 p-4 rounded-lg flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-lg text-gray-800">${team.name}</div>
+                            <div class="text-sm text-gray-500">Registrada às ${team.registeredAt ? team.registeredAt.toDate().toLocaleTimeString('pt-BR') : '...'}</div>
+                        </div>
+                        ${statusHtml}
+                    </div>`;
+            }).join('');
+        }
+
+        window.showCodeModal = function() {
+            document.getElementById('rankingModal').classList.add('hidden');
+            document.getElementById('codeModal').classList.remove('hidden');
+            document.getElementById('codeModal').classList.add('flex');
+        }
+        window.closeCodeModal = function() {
+             sessionStorage.clear();
+             window.location.reload();
+        }
+        window.showAchievement = function(title, description, emoji) {
+            document.getElementById('achievementEmoji').textContent = emoji;
+            document.getElementById('achievementTitle').textContent = title;
+            document.getElementById('achievementDescription').textContent = description;
+            document.getElementById('achievementPopup').classList.remove('hidden');
+            document.getElementById('achievementPopup').classList.add('flex');
+        }
+        window.closeAchievement = function() {
+            document.getElementById('achievementPopup').classList.add('hidden');
+            document.getElementById('achievementPopup').classList.remove('flex');
+            document.getElementById('gameArea').style.display = 'none';
+            document.getElementById('gameMap').style.display = 'block';
+        }
+
+        function generateQRCode() {
+            const gameUrl = window.location.href.split('?')[0] + '?mode=player';
+            document.getElementById('gameLink').value = gameUrl;
+            
+            const qr = qrcode(0, 'L');
+            qr.addData(gameUrl);
+qr.make();
+            const qrCodeContainer = document.getElementById('qrcode');
+            if (qrCodeContainer) {
+                qrCodeContainer.innerHTML = qr.createImgTag(5, 5);
+                qrCodeContainer.firstChild.style.width = "100%";
+                qrCodeContainer.firstChild.style.height = "100%";
+            }
+        }
+        
+        window.copyLink = function() {
+            const linkInput = document.getElementById('gameLink');
+            linkInput.select();
+            document.execCommand('copy');
+            customAlert('Link copiado! Compartilhe com as equipes.');
+        }
+
+        window.startAsPlayer = function() {
+            document.getElementById('adminPanel').style.display = 'none';
+            if (gameState.teamId && gameState.teamName) {
+                showWaitingRoom();
+            } else {
+                document.getElementById('teamRegistration').style.display = 'block';
+            }
+        }
+
+        function checkViewMode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('mode') === 'player') {
+                startAsPlayer();
+            } else {
+                document.getElementById('adminPanel').style.display = 'block';
+                generateQRCode();
+            }
+        }
+        
+        // --- Inicialização ---
+        initApp();
+    </script>
+</body>
+</html>
